@@ -28,6 +28,7 @@ void Application::Run()
 	{
 		dxDevice->ClearScreen({ 0,0,1,0 });
 		keyboard->Update();
+		dxSimplePso->Set(D3D12_FILL_MODE_SOLID);
 		dxDevice->Present();
 		if (!window->ProcessMessage()) break;
 	}

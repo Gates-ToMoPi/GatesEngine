@@ -4,21 +4,6 @@
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"d3dcompiler.lib")
 
-bool Dx12_Pipeline::Create_DescriptorHeap()
-{
-	/* 設定 */
-	D3D12_DESCRIPTOR_HEAP_DESC cbv_srvHeapDesc = {};
-	cbv_srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbv_srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	cbv_srvHeapDesc.NumDescriptors = 1;
-	/* 生成 */
-	if (FAILED((*pDevice)->CreateDescriptorHeap(&cbv_srvHeapDesc, IID_PPV_ARGS(&m_cbv_srvHeap))))
-	{
-		return false;
-	}
-	return true;
-}
-
 bool Dx12_Pipeline::Create_RootSignature()
 {
 	//サンプラーの設定
@@ -33,11 +18,6 @@ bool Dx12_Pipeline::Create_RootSignature()
 	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	//レンジの設定
-	D3D12_DESCRIPTOR_RANGE cbvRange = {};
-	cbvRange.NumDescriptors = 1;
-	cbvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	cbvRange.BaseShaderRegister = 0;
-	cbvRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	D3D12_DESCRIPTOR_RANGE srvRange = {};
 	srvRange.NumDescriptors = 1;
 	srvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -45,9 +25,10 @@ bool Dx12_Pipeline::Create_RootSignature()
 	srvRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	//ルートパラメータの設定
 	D3D12_ROOT_PARAMETER rootParam[2] = {};
-	rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParam[0].DescriptorTable.pDescriptorRanges = &cbvRange;
-	rootParam[0].DescriptorTable.NumDescriptorRanges = 1;
+	rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam[0].Descriptor.RegisterSpace = 0;
+	rootParam[0].Descriptor.ShaderRegister = 0;
 	rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	rootParam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParam[1].DescriptorTable.pDescriptorRanges = &srvRange;
@@ -163,7 +144,6 @@ Dx12_Pipeline::~Dx12_Pipeline()
 	SAFE_RELEASE(m_vsBlob);
 	SAFE_RELEASE(m_psBlob);
 	SAFE_RELEASE(m_rootBlob);
-	SAFE_RELEASE(m_cbv_srvHeap);
 	SAFE_RELEASE(m_rootSignature);
 	SAFE_RELEASE(m_pso_solid);
 	SAFE_RELEASE(m_pso_wire);
@@ -207,7 +187,6 @@ bool Dx12_Pipeline::LoadShaderFile(LPCWSTR filename, LPCSTR entrypoint, LPCSTR v
 
 bool Dx12_Pipeline::Create_Pipeline()
 {
-	if (!Create_DescriptorHeap())return false;
 	if (!Create_RootSignature())return false;
 	if (!Create_PipelineState())return false;
 	return true;
@@ -225,7 +204,4 @@ void Dx12_Pipeline::Set(D3D12_FILL_MODE fillMode)
 	}
 	//(*pCmdList)->SetPipelineState(m_pso_wire);
 	(*pCmdList)->SetGraphicsRootSignature(m_rootSignature);
-	ID3D12DescriptorHeap* ppHeap[] = { m_cbv_srvHeap };
-	(*pCmdList)->SetDescriptorHeaps(_countof(ppHeap), ppHeap);
-	(*pCmdList)->SetGraphicsRootDescriptorTable(0, m_cbv_srvHeap->GetGPUDescriptorHandleForHeapStart());
 }

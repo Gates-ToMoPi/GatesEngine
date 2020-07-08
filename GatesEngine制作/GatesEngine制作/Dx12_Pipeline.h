@@ -19,14 +19,12 @@ private:
 	ID3DBlob* m_vsBlob;
 	ID3DBlob* m_psBlob;
 	ID3DBlob* m_rootBlob;
-	ID3D12DescriptorHeap* m_cbv_srvHeap;
 	ID3D12RootSignature* m_rootSignature;
 	ID3D12PipelineState* m_pso_solid;
 	ID3D12PipelineState* m_pso_wire;
 	ID3D12Device** pDevice;
 	ID3D12GraphicsCommandList** pCmdList;
 private:
-	bool Create_DescriptorHeap();
 	bool Create_RootSignature();
 	void SetBlendMode(D3D12_RENDER_TARGET_BLEND_DESC* blendDesc, BlendMode mode);
 	bool Create_PipelineState();
