@@ -1,4 +1,5 @@
-float4 PSmain() : SV_TARGET
+#include"BasicShaderHeader.hlsli"
+float4 PSmain(VSOutput input) : SV_TARGET
 {
-	return float4(1.0f, 1.0f, 1.0f, 1.0f);
+	return color;
 }

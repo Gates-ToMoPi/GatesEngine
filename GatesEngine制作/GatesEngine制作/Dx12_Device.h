@@ -39,6 +39,8 @@ public:
 	bool Init(HWND hwnd, int window_width, int window_height); // 初期化
 	void ClearScreen(DirectX::XMFLOAT4 color); // 画面クリア
 	void Present(); // コマンドの実行と画面フリップ
-	ID3D12Device** GetDevice();
-	ID3D12GraphicsCommandList** GetCmdList();
+	ID3D12Device** GetDeviceAddress();
+	ID3D12Device* GetDevice();
+	ID3D12GraphicsCommandList** GetCmdListAddress();
+	ID3D12GraphicsCommandList* GetCmdList();
 };

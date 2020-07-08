@@ -195,6 +195,7 @@ void Dx12_Device::ClearScreen(DirectX::XMFLOAT4 color)
 	m_cmdList->ClearRenderTargetView(rtvHandle, rgba, 0, nullptr);
 	m_cmdList->RSSetViewports(1, &m_viewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorrect);
+	m_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void Dx12_Device::Present()
@@ -218,12 +219,22 @@ void Dx12_Device::Present()
 	m_swapChain->Present(1, 0);
 }
 
-ID3D12Device ** Dx12_Device::GetDevice()
+ID3D12Device ** Dx12_Device::GetDeviceAddress()
 {
 	return &m_device;
 }
 
-ID3D12GraphicsCommandList ** Dx12_Device::GetCmdList()
+ID3D12Device * Dx12_Device::GetDevice()
+{
+	return m_device;
+}
+
+ID3D12GraphicsCommandList ** Dx12_Device::GetCmdListAddress()
 {
 	return &m_cmdList;
+}
+
+ID3D12GraphicsCommandList * Dx12_Device::GetCmdList()
+{
+	return m_cmdList;
 }

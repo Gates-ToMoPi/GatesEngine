@@ -1,4 +1,7 @@
-float4 VSmain( float4 pos : POSITION ) : SV_POSITION
+#include"BasicShaderHeader.hlsli"
+VSOutput VSmain( float4 pos : POSITION )
 {
-	return pos;
+    VSOutput output;
+	output.svpos = mul(mat,pos);
+	return output;
 }
