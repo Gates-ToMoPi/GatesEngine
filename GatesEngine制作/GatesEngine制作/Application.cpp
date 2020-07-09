@@ -33,13 +33,15 @@ void Application::Run()
 
 	Vertex vertices[] =
 	{
-		{{  0.0f,   0.0f, 500.0f}},
-		{{  50.0f,   0.0f,500.0f}},
-		{{  50.0f,  50.0f,500.0f}},
+		{{ -50.0f,  50.0f, 500.0f}},
+		{{  50.0f,  50.0f, 500.0f}},
+		{{  50.0f, -50.0f, 500.0f}},
+	    {{ -50.0f, -50.0f, 500.0f}},
 	};
 	unsigned short indices[] =
 	{
 		0,1,2,
+		0,2,3,
 	};
 	D3D12_HEAP_PROPERTIES heapProp = {};
 	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -88,10 +90,11 @@ void Application::Run()
 	{
 		dxDevice->ClearScreen({ 0,0,1,0 });
 		keyboard->Update();
-		dxSimplePso->Set(D3D12_FILL_MODE_SOLID);
+		dxSimplePso->Set(D3D12_FILL_MODE_WIREFRAME);
 		dxDevice->GetCmdList()->SetGraphicsRootConstantBufferView(0, cb->GetGPUVirtualAddress());
+		dxDevice->GetCmdList()->IASetIndexBuffer(&ibView);
 		dxDevice->GetCmdList()->IASetVertexBuffers(0, 1, &vbView);
-		dxDevice->GetCmdList()->DrawInstanced(3, 1, 0, 0);
+		dxDevice->GetCmdList()->DrawIndexedInstanced(6, 1, 0, 0,0);
 		dxDevice->Present();
 		if (!window->ProcessMessage()) break;
 	}
