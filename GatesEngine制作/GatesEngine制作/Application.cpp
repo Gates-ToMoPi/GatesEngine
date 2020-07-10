@@ -24,77 +24,60 @@ bool Application::Initialize()
 void Application::Run()
 {
 	DirectX::XMMATRIX projection2D = DirectX::XMMatrixOrthographicOffCenterLH(0, 1280, 720, 0, 0, 1);
-	DirectX::XMMATRIX projection3D = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60), (float)window->GetWindowWidth() / window->GetWindowHeight(), 0.1f, 1000);
-	DirectX::XMFLOAT3 eyepos = { 0,0,-100 };
-	DirectX::XMFLOAT3 target = { 0,0,1};
+	DirectX::XMMATRIX projection3D = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), (float)window->GetWindowWidth() / window->GetWindowHeight(), 0.1f, 10000);
+	DirectX::XMFLOAT3 eyepos = { 0,0,0 };
+	DirectX::XMFLOAT3 target = { 0,0,1 };
 	DirectX::XMFLOAT3 up = { 0,1,0 };
 	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&eyepos), DirectX::XMLoadFloat3(&target), DirectX::XMLoadFloat3(&up));
 
-
-	Vertex vertices[] =
-	{
-		{{ -50.0f,  50.0f, 500.0f}},
-		{{  50.0f,  50.0f, 500.0f}},
-		{{  50.0f, -50.0f, 500.0f}},
-	    {{ -50.0f, -50.0f, 500.0f}},
-	};
-	unsigned short indices[] =
-	{
-		0,1,2,
-		0,2,3,
-	};
-	D3D12_HEAP_PROPERTIES heapProp = {};
-	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
-	D3D12_RESOURCE_DESC resDesc = {};
-	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resDesc.Height = 1;
-	resDesc.DepthOrArraySize = 1;
-	resDesc.MipLevels = 1;
-	resDesc.SampleDesc.Count = 1;
-	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	resDesc.Width = sizeof(vertices);
-	dxDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vb));
-	vbView.BufferLocation = vb->GetGPUVirtualAddress();
-	vbView.SizeInBytes = sizeof(vertices);
-	vbView.StrideInBytes = sizeof(vertices[0]);
-	DirectX::XMFLOAT3* vtxMap = nullptr;
-	vb->Map(0, nullptr, (void**)&vtxMap);
-	for (int i = 0; i < _countof(vertices); i++)
-	{
-		vtxMap[i] = vertices[i].pos;
-	}
-	vb->Unmap(0, nullptr);
-
-	resDesc.Width = sizeof(indices);
-	dxDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&ib));
-	ibView.BufferLocation = ib->GetGPUVirtualAddress();
-	ibView.Format = DXGI_FORMAT_R16_UINT;
-	ibView.SizeInBytes = sizeof(indices);
-	unsigned short* idxMap = nullptr;
-	ib->Map(0, nullptr, (void**)&idxMap);
-	for (int i = 0; i < _countof(indices); i++)
-	{
-		idxMap[i] = indices[i];
-	}
-
-	resDesc.Width = (sizeof(ConstantBufferData) + 0xff)&~0xff;
-	dxDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&cb));
-	ConstantBufferData* cstMap = nullptr;
-	cb->Map(0, nullptr, (void**)&cstMap);
-	cstMap->color = DirectX::XMFLOAT4(1, 0, 0, 1);
-	cstMap->matrix = view * projection3D;
-	cb->Unmap(0, nullptr);
+	std::vector<Vertex> vertices;
+	std::vector<unsigned short> indices;
+	vertices.push_back({ { -50.0f,  50.0f, 0.0f } });
+	vertices.push_back({ {  50.0f,  50.0f, 0.0f } });
+	vertices.push_back({ {  50.0f, -50.0f, 0.0f } });
+	vertices.push_back({ { -50.0f, -50.0f, 0.0f } });
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(0);
+	indices.push_back(2);
+	indices.push_back(3);
+	TransformMatrix trans = { DirectX::XMMatrixIdentity(),DirectX::XMMatrixIdentity(),DirectX::XMMatrixIdentity() };
+	obj = new Dx12_Object(dxDevice->GetDevice(),vertices, indices);
+	obj->Mapping3D(trans, view, projection3D, {1,0,0,1});
+	DirectX::XMFLOAT3 pos(0,0,500);
 
 	while (!keyboard->CheakHitKey(Key::ESCAPE))
 	{
+		static DirectX::XMFLOAT3 angle = {};
+		angle.y += 0.01f;;
+		if (keyboard->CheakHitKey(Key::RIGHT))
+		{
+			pos.x++;
+		}
+		if (keyboard->CheakHitKey(Key::LEFT))
+		{
+			pos.x--;
+		}
+		if (keyboard->CheakHitKey(Key::UP))
+		{
+			pos.y++;
+		}
+		if (keyboard->CheakHitKey(Key::DOWN))
+		{
+			pos.y--;
+		}
+		trans.rotation = DirectX::XMMatrixIdentity();
+		trans.rotation *= DirectX::XMMatrixRotationZ(0);
+		trans.rotation *= DirectX::XMMatrixRotationX(0);
+		trans.rotation *= DirectX::XMMatrixRotationY(angle.y);
+		trans.translation = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+		view = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&eyepos), DirectX::XMLoadFloat3(&target), DirectX::XMLoadFloat3(&up));
+		obj->Mapping3D(trans, view, projection3D, { 1,0,0,1 });
 		dxDevice->ClearScreen({ 0,0,1,0 });
 		keyboard->Update();
-		dxSimplePso->Set(D3D12_FILL_MODE_WIREFRAME);
-		dxDevice->GetCmdList()->SetGraphicsRootConstantBufferView(0, cb->GetGPUVirtualAddress());
-		dxDevice->GetCmdList()->IASetIndexBuffer(&ibView);
-		dxDevice->GetCmdList()->IASetVertexBuffers(0, 1, &vbView);
-		dxDevice->GetCmdList()->DrawIndexedInstanced(6, 1, 0, 0,0);
+		dxSimplePso->Set(D3D12_FILL_MODE_SOLID);
+		obj->Draw(dxDevice->GetCmdListAddress());
 		dxDevice->Present();
 		if (!window->ProcessMessage()) break;
 	}
@@ -103,6 +86,7 @@ void Application::Run()
 void Application::Terminate()
 {
 	delete keyboard;
+	delete obj;
 	delete dxSimplePso;
 	delete dxDevice;
 	delete window;
